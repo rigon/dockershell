@@ -1,24 +1,53 @@
 #!/bin/bash
 
-history -r ~/.dockershell_history
+# Read history
 
 echo "Type help for available commands and quit to exit the console"
 
-while [ $? -eq 0 ]; do
+quit=0
+history -r ~/.dockershell_history
+trap ' ' SIGINT
 
-	if [ "$line" == "quit" ]; then
-		exit
-	fi
+while [ $quit -eq 0 ]; do
 	
-	if [ "$line" != "" ]; then
-		history -s "$line"
-		docker $line
-	fi
-	
+	# Read command
 	echo
-	read -p "docker> " -r -e line
+	read -p "docker> " -r -e cmd
+	quit=$?		# Get exit code to detect EOF
+	
+	# Custom commands and shotcuts
+	case "$cmd" in
+	"");;
+	"quit" | "exit")
+		quit=1;;
+	"help")
+		docker help | head -n -2
+		echo
+		echo "Additional commands from dockershell:"
+		echo "  bash        Run bash interactively in a new container"
+		echo "  ll          List all containers and all images"
+		echo
+		echo "Run 'help COMMAND' for more information on a command."
+		;;
+	bash*)
+		options=$(echo $cmd | cut -d ' ' -f 2-)
+		docker run -it $options /bin/bash
+		;;
+	"ll")
+		docker images -a
+		echo
+		docker ps -a
+		;;
+	*)
+		docker $cmd
+	esac
+
+	# Save history and skip empty commands
+	if [ "$cmd" != "" ]; then history -s "$cmd"; fi
+
 done
 
+# Write histiry
 history -w ~/.dockershell_history
+trap 2
 echo
-
