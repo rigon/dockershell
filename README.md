@@ -1,18 +1,18 @@
-# dockerconsole
+# dockershell
 
-A console for docker
+A shell for docker
 
 ## How to use
 
-Add the file `dockerconsole` to your path. Check if it has running permissions:
+Add the file `dockershell` to your path. Check if it has running permissions:
 
-    chmod +x dockerconsole
+    chmod +x dockershell
 
 Then, run it:
 
-    $  dockerconsole
+    $  dockershell
     Type help for available commands and quit to exit the console
     
     docker>
 
-You can navigate through dockerconsole history with arrows keys. It is stored by default in `~/.dockerconsole_history`
+You can navigate through dockershell history with arrows keys. It is stored by default in `~/.dockershell_history`
