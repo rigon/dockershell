@@ -15,4 +15,4 @@ Then, run it:
     
     docker>
 
-You can navigate through dockerconsole history with arrows keys.
+You can navigate through dockerconsole history with arrows keys. It is stored by default in `~/.dockerconsole_history`
