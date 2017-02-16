@@ -1,6 +1,6 @@
 #!/bin/bash
 
-history -r ~/.dockerconsole_history
+history -r ~/.dockershell_history
 
 echo "Type help for available commands and quit to exit the console"
 
@@ -19,6 +19,6 @@ while [ $? -eq 0 ]; do
 	read -p "docker> " -r -e line
 done
 
-history -w ~/.dockerconsole_history
+history -w ~/.dockershell_history
 echo
 
