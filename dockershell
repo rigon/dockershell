@@ -1,14 +1,114 @@
 #!/bin/bash
 
-# Read history
+
+help() {
+	docker help | head -n -2
+	echo
+	echo "Additional commands from dockershell:"
+	echo "  bash        Run bash interactively in a new container"
+	echo "  ll          List all containers and all images"
+	echo
+	echo "Run 'help COMMAND' for more information on a command."	
+}
+
+
+autocomplete_list() {
+	# Commands without autocompletion
+	echo "container image network node plugin secret service stack swarm system volume
+         build cp create diff events exec export import info inspect kill load login logout logs
+         pause port rename restart rm rmi run save search stats tag top unpause update version wait
+         ll" | tr -s " " "\n" | tr " " "\n"
+
+
+	list_containers=$(docker ps -qa)
+	list_images=$(docker images -qa)
+
+	# attach
+	for i in $list_containers; do echo "attach $i"; done
+	# commit
+	for i in $list_containers; do echo "commit $i"; done
+	# start
+	for i in $list_containers; do echo "start $i"; done
+	# stop
+	for i in $list_containers; do echo "stop $i"; done
+	
+	# history
+	for i in $list_images; do echo "history $i"; done
+	# pull
+	for i in $list_images; do echo "pull $i"; done
+	# push
+	for i in $list_images; do echo "push $i"; done
+	# bash
+	for i in $list_images; do echo "bash $i"; done
+
+}
+
+autocomplete_print() {
+	cmd=$1
+	id=$2
+	
+	case "$cmd" in
+		"history" | "pull" | "push" | "bash")
+			docker_output=$(docker images -a)
+			echo "$docker_output" | head -n 1
+			echo "$docker_output" | tail -n +2 | grep "${id}";;
+		"attach" | "commit" | "start" | "stop")
+			docker_output=$(docker ps -a)
+			echo "$docker_output" | head -n 1
+			echo "$docker_output" | tail -n +2 | grep "${id}";;
+		"")
+			help;;
+		*)          
+			#docker help $cmd
+	esac
+}
+
+
+autocomplete_tab() {
+	echo "docker> ${READLINE_LINE}"
+	
+	# Filter the possibilities that doesn't match the prefix
+	list=$(echo "$autocomplete_list" | grep "^${READLINE_LINE}")
+	
+	# Find longest prefix in the possibilities
+	newautocomplete=$(echo "$list" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
+	
+	# If the remaining possibilities are none
+	if [ "$newautocomplete" != "" ]; then
+		READLINE_LINE="$newautocomplete"
+		READLINE_POINT="${#READLINE_LINE}"
+	fi
+	
+	# Print possible commands
+	list=$(echo "${list}" | cut -d ' ' -f -1 | sort | uniq)
+	if [ $(echo "$list" | wc -l) -gt 1 ]; then
+		echo "$list" | column
+	else
+		autocomplete_print $READLINE_LINE
+	fi
+}
+
+
+
 
 echo "Type help for available commands and quit to exit the console"
 
-quit=0
+# Read history
 history -r ~/.dockershell_history
+
+# Ignore Ctrl^C
 trap ' ' SIGINT
 
+# Key bind for TAB
+set -o emacs;
+bind -x '"\t":"autocomplete_tab"';
+
+
+quit=0
 while [ $quit -eq 0 ]; do
+
+	# Create autocomplete list
+	autocomplete_list=$(autocomplete_list)
 	
 	# Read command
 	echo
@@ -17,29 +117,22 @@ while [ $quit -eq 0 ]; do
 	
 	# Custom commands and shotcuts
 	case "$cmd" in
-	"");;
-	"quit" | "exit")
-		quit=1;;
-	"help")
-		docker help | head -n -2
-		echo
-		echo "Additional commands from dockershell:"
-		echo "  bash        Run bash interactively in a new container"
-		echo "  ll          List all containers and all images"
-		echo
-		echo "Run 'help COMMAND' for more information on a command."
-		;;
-	bash*)
-		options=$(echo $cmd | cut -d ' ' -f 2-)
-		docker run -it $options /bin/bash
-		;;
-	"ll")
-		docker images -a
-		echo
-		docker ps -a
-		;;
-	*)
-		docker $cmd
+		"");;
+		"quit" | "exit")
+			quit=1;;
+		"help")
+			help;;
+		bash*)
+			options=$(echo $cmd | cut -s -d ' ' -f 2-)
+			docker run -it $options /bin/bash
+			;;
+		"ll")
+			docker images -a
+			echo
+			docker ps -a
+			;;
+		*)
+			docker $cmd
 	esac
 
 	# Save history and skip empty commands
