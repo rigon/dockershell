@@ -2,6 +2,7 @@
 
 A shell for docker
 
+
 ## How to use
 
 Add the file `dockershell` to your path. Check if it has running permissions:
@@ -10,9 +11,15 @@ Add the file `dockershell` to your path. Check if it has running permissions:
 
 Then, run it:
 
-    $  dockershell
+    $ dockershell
     Type help for available commands and quit to exit the console
     
     docker>
 
-You can navigate through dockershell history with arrows keys. It is stored by default in `~/.dockershell_history`
+You can navigate through dockershell history with arrows keys. It is stored in `~/.dockershell_history`
+
+
+## Additional commands from dockershell
+
+- `bash` Run bash interactively in a new container
+- `ll` List all containers and all images
