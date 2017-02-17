@@ -21,7 +21,7 @@ autocomplete_list() {
 
 
 	list_containers=$(docker ps -qa)
-	list_images=$(docker images -qa)
+	list_images=$(docker images -qa && docker images -a | tail -n +2 | tr -s ' ' | cut -s -d ' ' -f 1,2 --output-delimiter=':')
 
 	# attach
 	for i in $list_containers; do echo "attach $i"; done
