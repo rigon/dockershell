@@ -27,6 +27,8 @@ help() {
 			echo "  bash        Run bash interactively in a new container"
 			echo "  h           Shortcut for help"
 			echo "  hist        Shortcut for history"
+			echo "  q           Shortcut for quit"
+			echo "  quit        Exit this shell"
 			echo
 			echo "Run 'help COMMAND' for more information on a command."
 			;;
