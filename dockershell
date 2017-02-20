@@ -25,6 +25,7 @@ help() {
 			echo "Additional commands from dockershell:"
 			echo "  b           Shortcut for bash"
 			echo "  bash        Run bash interactively in a new container"
+			echo "  ll          List all containers and all images"
 			echo "  h           Shortcut for help"
 			echo "  hist        Shortcut for history"
 			echo "  q           Shortcut for quit"
