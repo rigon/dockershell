@@ -13,6 +13,12 @@ help() {
 			echo "Options:"
 			echo "  -l  --last   Use the last container"
 			;;
+		"clean")
+			echo
+			echo "Usage: clean"
+			echo
+			echo "Remove all containers and images"
+			;;
 		"ll")
 			echo
 			echo "Usage: ll"
@@ -25,11 +31,12 @@ help() {
 			echo "Additional commands from dockershell:"
 			echo "  b           Shortcut for bash"
 			echo "  bash        Run bash interactively in a new container"
+			echo "  clean       Remove all containers and images"
 			echo "  ll          List all containers and all images"
 			echo "  h           Shortcut for help"
 			echo "  hist        Shortcut for history"
 			echo "  q           Shortcut for quit"
-			echo "  quit        Exit this shell"
+			echo "  quit           Exit this shell"
 			echo
 			echo "Run 'help COMMAND' for more information on a command."
 			;;
@@ -161,6 +168,17 @@ while [ $quit -eq 0 ]; do
 				docker exec -it $container /bin/bash
 			else
 				docker run -it $options /bin/bash
+			fi
+			;;
+		"clean")
+			echo "CAUTION: THIS ACTION IS IRREVERSIBLE!!"
+			echo "This will remove all containers and images!"
+			read -r -p "Are you sure you want to continue (yes/no)? " cleanans
+			if [ "$cleanans" == "yes" ]; then
+				echo "-- Removing containers"
+				for i in $(docker ps -aq); do docker stop $i; docker rm $i; done
+				echo "-- Removing images"
+				for i in $(docker images -aq); do docker rmi $i; done
 			fi
 			;;
 		"ll")
