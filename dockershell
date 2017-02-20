@@ -144,29 +144,25 @@ autocomplete_tab() {
 
 bash_command() {
 	# Check parameters
-	if [ $# -lt 2 ]; then
+	if [ $# -lt 1 ]; then
 		echo "You need to specify an image or an option!"
 		return
 	fi
 	
 	
 	# Run bash in an existing container
+	if [ $1 == "-l" -o $1 == "--last" -o $1 == "-c" -o $1 == "--container" ]; then
 	
-	if [ $1 == "-l" -o $1 == "--last" ]; then
-		container=$(docker ps -lq)
-	fi
+		if [ $1 == "-l" -o $1 == "--last" ]; then container=$(docker ps -lq); fi
+		if [ $1 == "-c" -o $1 == "--container" ]; then container=$2; fi
 	
-	if [ $1 == "-c" -o $1 == "--container" ]; then
-		container=$2
-	fi
-	
-	if [ "$container" == "" ]; then
-		echo "Invalid container ID"
-		return
-	else
-		echo -n "Connecting to container "
-		docker start $container
-		docker exec -it $container /bin/bash
+		if [ "$container" != "" ]; then
+			echo "Invalid container ID"
+		else
+			echo -n "Connecting to container "
+			docker start $container
+			docker exec -it $container /bin/bash
+		fi
 		return
 	fi
 	
