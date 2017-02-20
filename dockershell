@@ -2,24 +2,52 @@
 
 
 help() {
-	docker help | head -n -2
-	echo
-	echo "Additional commands from dockershell:"
-	echo "  bash        Run bash interactively in a new container"
-	echo "  ll          List all containers and all images"
-	echo
-	echo "Run 'help COMMAND' for more information on a command."	
+	cmd=$1
+	case "$cmd" in
+		"bash")
+			echo
+			echo "Usage: bash [OPTIONS] [IMAGE]"
+			echo
+			echo "Run bash interactively in a new container"
+			echo 
+			echo "Options:"
+			echo "  -l  --last   Use the last container"
+			;;
+		"ll")
+			echo
+			echo "Usage: ll"
+			echo
+			echo "List all containers and all images"
+			;;
+		"")
+			docker help | head -n -2
+			echo
+			echo "Additional commands from dockershell:"
+			echo "  b           Shortcut for bash"
+			echo "  bash        Run bash interactively in a new container"
+			echo "  h           Shortcut for help"
+			echo "  hist        Shortcut for history"
+			echo
+			echo "Run 'help COMMAND' for more information on a command."
+			;;
+		*)
+			docker help ${@:1}
+	esac
 }
 
 
 autocomplete_list() {
 	# Commands without autocompletion
-	echo "container image network node plugin secret service stack swarm system volume
+	list_commands="container image network node plugin secret service stack swarm system volume
          build cp create diff events exec export import info inspect kill load login logout logs
          pause port rename restart rm rmi run save search stats tag top unpause update version wait
-         ll" | tr -s " " "\n" | tr " " "\n"
-
-
+         ll"
+	echo $list_commands | tr " " "\n"
+	
+	# help
+	for i in $list_commands bash ll; do echo "help $i"; done
+	
+	
 	list_containers=$(docker ps -qa)
 	list_images=$(docker images -qa && docker images -a | tail -n +2 | tr -s ' ' | cut -s -d ' ' -f 1,2 --output-delimiter=':')
 
@@ -39,27 +67,23 @@ autocomplete_list() {
 	# push
 	for i in $list_images; do echo "push $i"; done
 	# bash
-	for i in $list_images; do echo "bash $i"; done
+	for i in $list_images --last; do echo "bash $i"; done
 
 }
 
 autocomplete_print() {
 	cmd=$1
-	id=$2
+	options=$2
 	
 	case "$cmd" in
 		"history" | "pull" | "push" | "bash")
 			docker_output=$(docker images -a)
 			echo "$docker_output" | head -n 1
-			echo "$docker_output" | tail -n +2 | grep "${id}";;
+			echo "$docker_output" | tail -n +2 | grep -- "${options}";;
 		"attach" | "commit" | "start" | "stop")
 			docker_output=$(docker ps -a)
 			echo "$docker_output" | head -n 1
-			echo "$docker_output" | tail -n +2 | grep "${id}";;
-		"")
-			help;;
-		*)          
-			#docker help $cmd
+			echo "$docker_output" | tail -n +2 | grep -- "${options}";;
 	esac
 }
 
@@ -68,7 +92,7 @@ autocomplete_tab() {
 	echo "docker> ${READLINE_LINE}"
 	
 	# Filter the possibilities that doesn't match the prefix
-	list=$(echo "$autocomplete_list" | grep "^${READLINE_LINE}")
+	list=$(echo "$autocomplete_list" | grep -- "^${READLINE_LINE}")
 	
 	# Find longest prefix in the possibilities
 	newautocomplete=$(echo "$list" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
@@ -116,21 +140,33 @@ while [ $quit -eq 0 ]; do
 	quit=$?		# Get exit code to detect EOF
 	
 	# Custom commands and shotcuts
-	case "$cmd" in
+	action=$(echo "$cmd" | cut -d ' ' -f -1)
+	options=$(echo "$cmd" | cut -s -d ' ' -f 2-)
+	case $action in
 		"");;
-		"quit" | "exit")
+		"q" | "quit" | "exit")
 			quit=1;;
-		"help")
-			help;;
-		bash*)
-			options=$(echo $cmd | cut -s -d ' ' -f 2-)
-			docker run -it $options /bin/bash
+		"h" | "help")
+			help $options;;
+		"b" | "bash")
+			if [ ${#options} -lt 2 ]; then
+				echo "You need to specify an image!"
+			elif [ $options == "-l" -o $options == "--last" ]; then
+				container=$(docker ps -lq)
+				echo -n "Connecting to container "
+				docker start $container
+				docker exec -it $container /bin/bash
+			else
+				docker run -it $options /bin/bash
+			fi
 			;;
 		"ll")
 			docker images -a
 			echo
 			docker ps -a
 			;;
+		"hist")
+			docker history $options;;
 		*)
 			docker $cmd
 	esac
