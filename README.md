@@ -21,5 +21,10 @@ You can navigate through dockershell history with arrows keys. It is stored in `
 
 ## Additional commands from dockershell
 
+- `b` Shortcut for `bash`
 - `bash` Run bash interactively in a new container
 - `ll` List all containers and all images
+- `h` Shortcut for `help`
+- `hist` Shortcut for `history`
+- `q` Shortcut for `quit`
+- `quit` Exit this shell
