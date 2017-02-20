@@ -25,6 +25,7 @@ Autocomplete is also supported, just press TAB to get a list of options.
 
 - `b` Shortcut for `bash`
 - `bash` Run bash interactively in a new container
+- `clean` Remove all containers and images
 - `ll` List all containers and all images
 - `h` Shortcut for `help`
 - `hist` Shortcut for `history`
