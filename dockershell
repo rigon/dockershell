@@ -11,7 +11,8 @@ help() {
 			echo "Run bash interactively in a new container"
 			echo 
 			echo "Options:"
-			echo "  -l  --last   Use the last container"
+			echo "  -c, --container container   Use container to run bash interactively"
+			echo "  -l, --last                  Use the last container"
 			;;
 		"clean")
 			echo
@@ -36,7 +37,7 @@ help() {
 			echo "  h           Shortcut for help"
 			echo "  hist        Shortcut for history"
 			echo "  q           Shortcut for quit"
-			echo "  quit           Exit this shell"
+			echo "  quit        Exit this shell"
 			echo
 			echo "Run 'help COMMAND' for more information on a command."
 			;;
@@ -77,24 +78,47 @@ autocomplete_list() {
 	# push
 	for i in $list_images; do echo "push $i"; done
 	# bash
-	for i in $list_images --last; do echo "bash $i"; done
+	echo "bash -l"
+	echo "bash --last"
+	for i in $list_images; do echo "bash $i"; done
+	for i in $list_containers; do echo "bash -c $i"; echo "bash --container $i"; done
 
 }
 
 autocomplete_print() {
-	cmd=$1
-	options=$2
+	list=$1
+	cmd=$2
+	options=$3
 	
 	case "$cmd" in
-		"history" | "pull" | "push" | "bash")
+		"bash")
+			# Nothing to do
+			if [ "$options" == "-l" -o "$options" == "--last" ]; then return; fi
+			
+			# Select to list containers or images
+			if [ "$options" == "-c" -o "$options" == "--container" ]; then
+				docker_output=$(docker ps -a)
+				options=$4	# The container ID is here
+			else
+				docker_output=$(docker images -a)
+			fi
+			
+			echo "$docker_output" | head -n 1
+			echo "$docker_output" | tail -n +2 | grep -- "$4"
+			return;;
+		"history" | "pull" | "push")
 			docker_output=$(docker images -a)
 			echo "$docker_output" | head -n 1
-			echo "$docker_output" | tail -n +2 | grep -- "${options}";;
+			echo "$docker_output" | tail -n +2 | grep -- "${options}"
+			return;;
 		"attach" | "commit" | "start" | "stop")
 			docker_output=$(docker ps -a)
 			echo "$docker_output" | head -n 1
-			echo "$docker_output" | tail -n +2 | grep -- "${options}";;
+			echo "$docker_output" | tail -n +2 | grep -- "${options}"
+			return;;
 	esac
+		
+	echo "$list" | cut -d ' ' -f -1 | sort | uniq | column
 }
 
 
@@ -114,14 +138,41 @@ autocomplete_tab() {
 	fi
 	
 	# Print possible commands
-	list=$(echo "${list}" | cut -d ' ' -f -1 | sort | uniq)
-	if [ $(echo "$list" | wc -l) -gt 1 ]; then
-		echo "$list" | column
-	else
-		autocomplete_print $READLINE_LINE
-	fi
+	autocomplete_print "$list" $READLINE_LINE
 }
 
+
+bash_command() {
+	# Check parameters
+	if [ $# -lt 2 ]; then
+		echo "You need to specify an image or an option!"
+		return
+	fi
+	
+	
+	# Run bash in an existing container
+	
+	if [ $1 == "-l" -o $1 == "--last" ]; then
+		container=$(docker ps -lq)
+	fi
+	
+	if [ $1 == "-c" -o $1 == "--container" ]; then
+		container=$2
+	fi
+	
+	if [ "$container" == "" ]; then
+		echo "Invalid container ID"
+		return
+	else
+		echo -n "Connecting to container "
+		docker start $container
+		docker exec -it $container /bin/bash
+		return
+	fi
+	
+	# Run bash in a new container
+	docker run -it $options /bin/bash
+}
 
 
 
@@ -159,24 +210,16 @@ while [ $quit -eq 0 ]; do
 		"h" | "help")
 			help $options;;
 		"b" | "bash")
-			if [ ${#options} -lt 2 ]; then
-				echo "You need to specify an image!"
-			elif [ $options == "-l" -o $options == "--last" ]; then
-				container=$(docker ps -lq)
-				echo -n "Connecting to container "
-				docker start $container
-				docker exec -it $container /bin/bash
-			else
-				docker run -it $options /bin/bash
-			fi
-			;;
+			bash_command $options;;
 		"clean")
 			echo "CAUTION: THIS ACTION IS IRREVERSIBLE!!"
 			echo "This will remove all containers and images!"
 			read -r -p "Are you sure you want to continue (yes/no)? " cleanans
 			if [ "$cleanans" == "yes" ]; then
+				echo
 				echo "-- Removing containers"
 				for i in $(docker ps -aq); do docker stop $i; docker rm $i; done
+				echo
 				echo "-- Removing images"
 				for i in $(docker images -aq); do docker rmi $i; done
 			fi
