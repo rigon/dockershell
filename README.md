@@ -18,6 +18,8 @@ Then, run it:
 
 You can navigate through dockershell history with arrows keys. It is stored in `~/.dockershell_history`
 
+Autocomplete is also supported, just press TAB to get a list of options.
+
 
 ## Additional commands from dockershell
 
