@@ -50,7 +50,7 @@ help() {
 autocomplete_list() {
 	# Commands without autocompletion
 	list_commands="container image network node plugin secret service stack swarm system volume
-         build cp create diff events exec export import info inspect kill load login logout logs
+         build cp create diff events exec export import info kill load login logout logs
          pause port pull rename restart rm rmi save search stats tag top unpause update version wait
          ll"
 	echo $list_commands | tr " " "\n"
@@ -73,6 +73,8 @@ autocomplete_list() {
 	
 	# history
 	for i in $list_images; do echo "history $i"; done
+	# inspect
+	for i in $list_images; do echo "inspect $i"; done
 	# run
 	for i in $list_images; do echo "run $i"; done
 	# push
@@ -106,7 +108,7 @@ autocomplete_print() {
 			echo "$docker_output" | head -n 1
 			echo "$docker_output" | tail -n +2 | grep -- "$4"
 			return;;
-		"history" | "push" | "run")
+		"history" | "inspect" | "push" | "run")
 			docker_output=$(docker images -a)
 			echo "$docker_output" | head -n 1
 			echo "$docker_output" | tail -n +2 | grep -- "${options}"
@@ -219,6 +221,9 @@ while [ $quit -eq 0 ]; do
 				echo "-- Removing images"
 				for i in $(docker images -aq); do docker rmi $i; done
 			fi
+			echo
+			echo "-- Pruning volumes"
+			docker volume prune
 			;;
 		"ll")
 			docker images -a
