@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 help() {
 	cmd=$1
 	case "$cmd" in
@@ -179,7 +178,26 @@ bash_command() {
 	docker run -it $options /bin/bash
 }
 
+check_dockerd() {
+	# Check if the daemon is running
+	docker info 2> /dev/null > /dev/null
+	
+	if [ $? -ne 0 ]; then
+		echo -e "\033[0;31mDocker daemon is not running. Starting...\033[0m"
+		sudo -b dockerd
+		
+		echo -e "\033[0;31mWaiting for dockerd to start...\033[0m"
+		while true; do
+			sleep 1
+			docker info > /dev/null
+			if [ $? -eq 0 ]; then break; fi
+		done
+	fi		
+}
 
+
+# Check if docker daemon is running
+check_dockerd
 
 echo "Type help for available commands and quit to exit the console"
 
