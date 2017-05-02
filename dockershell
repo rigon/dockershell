@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Check if DOCKERFILE_EDITOR is an enviroment variable
+if [ -z "$DOCKERFILE_EDITOR" ]; then
+	DOCKERFILE_EDITOR=vim
+fi
+
 help() {
 	cmd=$1
 	case "$cmd" in
@@ -31,8 +36,12 @@ help() {
 			echo "Additional commands from dockershell:"
 			echo "  b           Shortcut for bash"
 			echo "  bash        Run bash interactively in a new container"
+			echo "  cd          Change directory"
 			echo "  clean       Remove all containers and images"
+			echo "  e           Shortcut for edit"
+			echo "  edit        Edit a Dockerfile in the current directory"
 			echo "  ll          List all containers and all images"
+			echo "  ls          List files in the current directory"
 			echo "  h           Shortcut for help"
 			echo "  hist        Shortcut for history"
 			echo "  q           Shortcut for quit"
@@ -220,7 +229,7 @@ while [ $quit -eq 0 ]; do
 	
 	# Read command
 	echo
-	read -p "docker> " -r -e cmd
+	read -p "docker $PWD> " -r -e cmd
 	quit=$?		# Get exit code to detect EOF
 	
 	# Custom commands and shotcuts
@@ -257,6 +266,14 @@ while [ $quit -eq 0 ]; do
 			;;
 		"hist")
 			docker history $options;;
+		"cd")
+			cd $options;;
+		"ls")
+			ls --color $options;;
+		"e" | "edit")
+			dockerfile="Dockerfile"
+			if [ -n "$options" ]; then dockerfile="$options"; fi
+			$DOCKERFILE_EDITOR $dockerfile;;
 		*)
 			docker $cmd
 	esac
